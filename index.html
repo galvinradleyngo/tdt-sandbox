@@ -462,21 +462,26 @@
                 return structure - dialogue; // Fallback
             }
 
-            let distance = (structure - dialogue); // Base distance
+            let baseDistance = (structure - dialogue); 
 
-            // Calculate structural mismatch based on autonomy preference
-            // Lower autonomyPreference (e.g., 20 for 'Prefers Guidance') means they prefer higher structure (e.g., 80)
-            // Higher autonomyPreference (e.g., 80 for 'Self-Directed') means they prefer lower structure (e.g., 20)
+            // Calculate ideal structure for the persona.
+            // Lower autonomyPreference (e.g., Prefers Guidance = 20) means they prefer higher structure (closer to 100).
+            // Higher autonomyPreference (e.g., Self-Directed = 80) means they prefer lower structure (closer to 0).
             const idealStructureForAutonomy = 100 - persona.autonomyPreference;
-            const structureMismatch = Math.abs(structure - idealStructureForAutonomy);
 
-            // Add a penalty for the mismatch, scaled to keep overall distance reasonable
-            // Dividing by 5 means a 100-point mismatch adds 20 to the distance.
-            distance += structureMismatch / 5;
+            let structureMismatchPenalty = 0;
+            // If the course structure is significantly different from the persona's ideal structure, add a penalty.
+            // This penalty is higher if the mismatch is greater.
+            structureMismatchPenalty = Math.abs(structure - idealStructureForAutonomy) / 5; // Scaled penalty
 
-            // Ensure distance doesn't go below 0 (negative distance doesn't make sense)
-            // Or above 100 (clamp for display purposes, as it can exceed 100 with penalties)
-            return Math.max(0, Math.min(100, distance));
+            // The perceived distance combines the base distance and the structure mismatch penalty.
+            // The penalty means:
+            // - For a self-directed learner (ideal low structure), if course structure is high, distance increases.
+            // - For a guidance-preferring learner (ideal high structure), if course structure is low, distance increases.
+            let perceivedDistance = baseDistance + structureMismatchPenalty;
+
+            // Ensure distance doesn't go below 0 or exceed 100 for display purposes.
+            return Math.max(0, Math.min(100, perceivedDistance));
         }
 
         function findClosestScenario(s, d) {
@@ -511,7 +516,17 @@
                 explanationText += 'The course offers a **higher degree of dialogue** compared to its structure, which helps to bridge the psychological gap and reduce transactional distance. Learners are likely to feel more connected.';
             }
 
-            // Flexibility and Learner Autonomy explanation removed as per request.
+            // Added explanation for autonomy mismatch
+            const persona = personas[currentPersona];
+            const idealStructure = 100 - persona.autonomyPreference;
+            if (Math.abs(structure - idealStructure) > 20) { // If there's a significant mismatch
+                if (persona.autonomyPreference > 50 && structure > idealStructure) {
+                    explanationText += `<br><br>There's also a significant mismatch: This **self-directed** learner prefers low structure, but the course is highly structured. This tension increases perceived distance.`;
+                } else if (persona.autonomyPreference < 50 && structure < idealStructure) {
+                    explanationText += `<br><br>There's also a significant mismatch: This learner **prefers guidance**, but the course offers very low structure. This ambiguity increases perceived distance.`;
+                }
+            }
+
 
             return `<p>${explanationText}</p>`;
         }
@@ -547,7 +562,7 @@
             
             let level, bgColor, textColor = 'text-white';
             if (distanceValue > 60) { level = 'High'; bgColor = 'bg-red-500'; } 
-            else if (distanceValue > 15) { level = 'Medium'; bgColor = 'bg-yellow-500'; }
+            else if (distanceValue > 30) { level = 'Medium'; bgColor = 'bg-yellow-500'; } // Adjusted boundary for better distribution
             else { level = 'Low'; bgColor = 'bg-green-600'; }
             const distanceDisplay = document.getElementById('distance-display');
             distanceDisplay.innerHTML = `<h3 class="text-lg font-bold">Perceived Distance: <span class="text-xl">${level}</span></h3>`;
@@ -557,14 +572,14 @@
             document.getElementById('scenario-name').textContent = match.name;
             document.getElementById('scenario-description').textContent = match.description;
             // Passing persona name to generateExplanation
-            document.getElementById('explanation-box').innerHTML = generateExplanation(s,d,personas[currentPersona].name);
+            document.getElementById('explanation-box').innerHTML = generateExplanation(s,d,currentPersona); // Pass persona KEY here
         }
         
         // Persona autonomy property added
         Object.assign(personas, {
-            'prefers-guidance': { name: 'Prefers Guidance', description: 'This learner thrives with clear instructions, defined tasks, and external motivation. They may feel anxious or overwhelmed with too much ambiguity or self-direction.', autonomyPreference: 20 }, // Low autonomy preference
-            'balanced': { name: 'Balanced', description: 'This learner is comfortable with some guidance and structure but also appreciates opportunities for independent exploration and choice.', autonomyPreference: 50 }, // Medium autonomy preference
-            'self-directed': { name: 'Self-Directed', description: 'This learner is highly motivated and goal-oriented, preferring to control their own learning path and resources. They may feel constrained or disengaged by rigid structure or excessive oversight.', autonomyPreference: 80 } // High autonomy preference
+            'prefers-guidance': { name: 'Prefers Guidance', description: 'This learner thrives with clear instructions, defined tasks, and external motivation. They may feel anxious or overwhelmed with too much ambiguity or self-direction.', autonomyPreference: 20 }, // Low autonomy preference: Prefers HIGH structure (100-20=80)
+            'balanced': { name: 'Balanced', description: 'This learner is comfortable with some guidance and structure but also appreciates opportunities for independent exploration and choice.', autonomyPreference: 50 }, // Medium autonomy preference: Prefers MEDIUM structure (100-50=50)
+            'self-directed': { name: 'Self-Directed', description: 'This learner is highly motivated and goal-oriented, preferring to control their own learning path and resources. They may feel constrained or disengaged by rigid structure or excessive oversight.', autonomyPreference: 80 } // High autonomy preference: Prefers LOW structure (100-80=20)
         });
         // Flexibility property removed from scenarios
         Object.assign(scenarios, {
