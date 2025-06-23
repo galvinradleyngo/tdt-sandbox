@@ -446,4 +446,124 @@
                 button.dataset.key = key;
                 button.textContent = persona.name;
                 button.className = 'persona-btn p-2 rounded-lg font-medium text-sm border-2 border-gray-200 bg-white text-gray-600';
-                if (key === currentPers
+                if (key === currentPersona) {
+                    button.classList.add('active');
+                }
+                button.addEventListener('click', () => {
+                    currentPersona = key;
+                    document.querySelectorAll('.persona-btn').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    updateSimulator();
+                });
+                personaSelector.appendChild(button);
+            }
+        }
+        
+        function calculateDistance(structure, dialogue) {
+            // Distance increases with more structure and less dialogue.
+            // Flexibility and learner autonomy mismatch factors are removed.
+            return structure - dialogue;
+        }
+
+        function findClosestScenario(s, d) {
+            let bestMatch = '';
+            let minDifference = Infinity;
+
+            for (const key in scenarios) {
+                const scenario = scenarios[key];
+                // Calculate Euclidean distance or similar for a "closest" match
+                const diff = Math.abs(s - scenario.structure) + Math.abs(d - scenario.dialogue);
+                if (diff < minDifference) {
+                    minDifference = diff;
+                    bestMatch = key;
+                }
+            }
+            return scenarios[bestMatch];
+        }
+
+        function generateExplanation(structure, dialogue, personaName) {
+            let explanationText = '';
+
+            explanationText += `For a **${personaName}** learner:<br><br>`;
+
+            // Explanation based on Structure and Dialogue
+            if (structure > 70 && dialogue < 30) {
+                explanationText += 'The course\'s **high structure** (e.g., rigid lesson plans, fixed content) combined with **low dialogue** (minimal interaction, one-way communication) creates a naturally large psychological gap for the learner. This often characterizes highly standardized or automated courses.';
+            } else if (structure < 30 && dialogue > 70) {
+                explanationText += 'The course\'s **high level of dialogue** (e.g., active discussions, frequent instructor feedback) fosters a strong sense of connection, significantly reducing the base distance. The **low structure** allows for more learner-driven interaction.';
+            } else if (structure >= dialogue) {
+                explanationText += 'The course has a **higher emphasis on structure** than on dialogue, which generally contributes to increased transactional distance. Learners may feel a greater psychological space between themselves and the instructor or content.';
+            } else { // dialogue > structure
+                explanationText += 'The course offers a **higher degree of dialogue** compared to its structure, which helps to bridge the psychological gap and reduce transactional distance. Learners are likely to feel more connected.';
+            }
+
+            // Flexibility and Learner Autonomy explanation removed as per request.
+
+            return `<p>${explanationText}</p>`;
+        }
+        
+        function createBarHTML(s,d) {
+            return `
+                <div>
+                    <div class="flex justify-between text-sm mb-1"><span class="font-medium">Structure</span><span>${s}</span></div>
+                    <div class="variable-bar-bg rounded-full h-2 w-full"><div class="variable-bar structure-bar h-2 rounded-full" style="width: ${s}%"></div></div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1"><span class="font-medium">Dialogue</span><span>${d}</span></div>
+                    <div class="variable-bar-bg rounded-full h-2 w-full"><div class="variable-bar dialogue-bar h-2 rounded-full" style="width: ${d}%"></div></div>
+                </div>
+                <!-- Flexibility Bar Removed -->
+            `;
+        }
+
+        function updateSimulator() {
+            const { s, d } = getSliderValues();
+            
+            document.getElementById('structureValue').textContent = s;
+            document.getElementById('dialogueValue').textContent = d;
+            // Flexibility value update removed
+            
+            personaDescription.textContent = personas[currentPersona].description;
+            
+            const liveViz = document.getElementById('sandbox-viz');
+            liveViz.innerHTML = createBarHTML(s,d);
+            
+            // Learner autonomy parameter removed from calculateDistance call
+            const distanceValue = calculateDistance(s, d);
+            
+            let level, bgColor, textColor = 'text-white';
+            if (distanceValue > 60) { level = 'High'; bgColor = 'bg-red-500'; } 
+            else if (distanceValue > 15) { level = 'Medium'; bgColor = 'bg-yellow-500'; }
+            else { level = 'Low'; bgColor = 'bg-green-600'; }
+            const distanceDisplay = document.getElementById('distance-display');
+            distanceDisplay.innerHTML = `<h3 class="text-lg font-bold">Perceived Distance: <span class="text-xl">${level}</span></h3>`;
+            distanceDisplay.className = `p-4 rounded-lg text-center ${bgColor} ${textColor} transition-all duration-300`;
+
+            const match = findClosestScenario(s, d);
+            document.getElementById('scenario-name').textContent = match.name;
+            document.getElementById('scenario-description').textContent = match.description;
+            // Passing persona name to generateExplanation
+            document.getElementById('explanation-box').innerHTML = generateExplanation(s,d,personas[currentPersona].name);
+        }
+        
+        // Persona autonomy property removed as flexibility is removed.
+        Object.assign(personas, {
+            'prefers-guidance': { name: 'Prefers Guidance', description: 'This learner thrives with clear instructions, defined tasks, and external motivation. They may feel anxious or overwhelmed with too much ambiguity or self-direction.' },
+            'balanced': { name: 'Balanced', description: 'This learner is comfortable with some guidance and structure but also appreciates opportunities for independent exploration and choice.' },
+            'self-directed': { name: 'Self-Directed', description: 'This learner is highly motivated and goal-oriented, preferring to control their own learning path and resources. They may feel constrained or disengaged by rigid structure or excessive oversight.' }
+        });
+        // Flexibility property removed from scenarios
+        Object.assign(scenarios, {
+            'mooc': { name: 'Self-Paced MOOC', description: 'A massive online course with pre-recorded videos, automated quizzes, and minimal instructor interaction. Relies heavily on learner autonomy.', structure: 95, dialogue: 5 },
+            'sync_lecture': { name: 'Synchronous Lecture', description: 'A live, instructor-led lecture (online or F2F) with some Q&A, but a fixed path and pace. Provides clear structure with limited real-time dialogue options.', structure: 85, dialogue: 35 },
+            'async_course': { name: 'Asynchronous Discussion Course', description: 'A typical online course with structured modules, deadlines, and learning driven by facilitated discussion forums. Balances structure with opportunities for dialogue.', structure: 60, dialogue: 65 },
+            'flipped_classroom': { name: 'Blended: Flipped Classroom', description: 'Learners review content online independently, then engage in high-dialogue activities like problem-solving and collaboration in class. Combines flexibility in content access with structured interaction.', structure: 50, dialogue: 80 },
+            'pbl': { name: 'Project-Based Learning (PBL)', description: 'Learning is centered around a large, often collaborative, project with significant learner choice and flexible timelines. Emphasizes dialogue and learner autonomy.', structure: 35, dialogue: 75 },
+            'tutorial': { name: 'Tutorial / Mentorship', description: 'One-on-one or small group guidance with an expert. Highly responsive, personalized, and adaptive to the learner\'s needs and pace.', structure: 20, dialogue: 95 }
+        });
+
+        init();
+
+    </script>
+</body>
+</html>
