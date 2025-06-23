@@ -315,10 +315,10 @@
         }
 
         function generateResultHTML(config) {
-            const { structure, dialogue, name } = config; // Removed persona
-            const distanceValue = calculateDistance(structure, dialogue); // Removed persona parameter
+            const { structure, dialogue, name } = config; 
+            const distanceValue = calculateDistance(structure, dialogue);
             const closestScenario = findClosestScenario(structure, dialogue);
-            const explanation = generateExplanation(structure, dialogue); // Removed persona parameter
+            const explanation = generateExplanation(structure, dialogue);
             
             let level, bgColor, textColor = 'text-white';
             if (distanceValue > 70) { level = 'Very High'; bgColor = 'bg-red-700'; } 
@@ -343,7 +343,7 @@
                 </div>
                 <div class="space-y-2 mt-4">
                     <h3 class="font-semibold text-gray-700">Explanation:</h3>
-                    <div class="text-sm text-gray-600 p-3 bg-gray-100 rounded-lg">${explanation}</div>
+                    <div class="text-sm text-gray-600 p-3 bg-gray-100 rounded-lg min-h-[100px]">${explanation}</div>
                 </div>
             `;
         }
@@ -469,7 +469,7 @@
                 explanationText += 'The course offers a **higher degree of dialogue** compared to its structure, which helps to bridge the psychological gap and reduce transactional distance. Learners are likely to feel more connected.';
             }
 
-            // Autonomy note (as per screenshot)
+            // Autonomy note (as per screenshot), now in a distinct box
             const distanceValue = calculateDistance(structure, dialogue);
             let autonomyRequired = '';
             if (distanceValue > 70) { autonomyRequired = 'very high'; }
@@ -478,7 +478,9 @@
             else if (distanceValue > 10) { autonomyRequired = 'low'; }
             else { autonomyRequired = 'very low'; }
 
-            explanationText += `<br><br><strong>Note on Autonomy:</strong> As transactional distance increases, the level of autonomy required of the learner also increases. For this course design, a **${autonomyRequired}** level of learner autonomy would be required for successful engagement.`;
+            explanationText += `<div class="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg mt-4">
+                                <strong>Note on Autonomy:</strong> As transactional distance increases, the level of autonomy required of the learner also increases. For this course design, a **${autonomyRequired}** level of learner autonomy would be required for successful engagement.
+                                </div>`;
 
 
             return `<p>${explanationText}</p>`;
