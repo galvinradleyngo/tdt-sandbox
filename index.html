@@ -323,7 +323,7 @@
             // Flexibility and learner autonomy are removed from calculations
             const { structure, dialogue, persona, name } = config;
             // No learnerAutonomy needed as flexibility is removed
-            const distanceValue = calculateDistance(structure, dialogue);
+            const distanceValue = calculateDistance(structure, dialogue, persona); // Pass persona to calculateDistance
             const closestScenario = findClosestScenario(structure, dialogue);
             const explanation = generateExplanation(structure, dialogue, personas[persona].name); // Pass persona name for explanation
             
@@ -364,8 +364,8 @@
                     </div>
                     <input id="structureSlider" type="range" min="0" max="100" value="50">
                     <div class="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>Flexible</span> <!-- Swapped label -->
-                        <span>Rigid</span> <!-- Swapped label -->
+                        <span>Flexible</span> <!-- Swapped label for correct continuum -->
+                        <span>Rigid</span> <!-- Swapped label for correct continuum -->
                     </div>
                 </div>
                 <div>
@@ -455,10 +455,28 @@
             }
         }
         
-        function calculateDistance(structure, dialogue) {
-            // Distance increases with more structure and less dialogue.
-            // Flexibility and learner autonomy mismatch factors are removed.
-            return structure - dialogue;
+        function calculateDistance(structure, dialogue, personaKey) { // Added personaKey parameter
+            const persona = personas[personaKey];
+            if (!persona) {
+                console.warn(`Persona '${personaKey}' not found. Using default distance calculation.`);
+                return structure - dialogue; // Fallback
+            }
+
+            let distance = (structure - dialogue); // Base distance
+
+            // Calculate structural mismatch based on autonomy preference
+            // Lower autonomyPreference (e.g., 20 for 'Prefers Guidance') means they prefer higher structure (e.g., 80)
+            // Higher autonomyPreference (e.g., 80 for 'Self-Directed') means they prefer lower structure (e.g., 20)
+            const idealStructureForAutonomy = 100 - persona.autonomyPreference;
+            const structureMismatch = Math.abs(structure - idealStructureForAutonomy);
+
+            // Add a penalty for the mismatch, scaled to keep overall distance reasonable
+            // Dividing by 5 means a 100-point mismatch adds 20 to the distance.
+            distance += structureMismatch / 5;
+
+            // Ensure distance doesn't go below 0 (negative distance doesn't make sense)
+            // Or above 100 (clamp for display purposes, as it can exceed 100 with penalties)
+            return Math.max(0, Math.min(100, distance));
         }
 
         function findClosestScenario(s, d) {
@@ -524,8 +542,8 @@
             const liveViz = document.getElementById('sandbox-viz');
             liveViz.innerHTML = createBarHTML(s,d);
             
-            // Learner autonomy parameter removed from calculateDistance call
-            const distanceValue = calculateDistance(s, d);
+            // Learner autonomy parameter passed to calculateDistance
+            const distanceValue = calculateDistance(s, d, currentPersona);
             
             let level, bgColor, textColor = 'text-white';
             if (distanceValue > 60) { level = 'High'; bgColor = 'bg-red-500'; } 
@@ -542,11 +560,11 @@
             document.getElementById('explanation-box').innerHTML = generateExplanation(s,d,personas[currentPersona].name);
         }
         
-        // Persona autonomy property removed as flexibility is removed.
+        // Persona autonomy property added
         Object.assign(personas, {
-            'prefers-guidance': { name: 'Prefers Guidance', description: 'This learner thrives with clear instructions, defined tasks, and external motivation. They may feel anxious or overwhelmed with too much ambiguity or self-direction.' },
-            'balanced': { name: 'Balanced', description: 'This learner is comfortable with some guidance and structure but also appreciates opportunities for independent exploration and choice.' },
-            'self-directed': { name: 'Self-Directed', description: 'This learner is highly motivated and goal-oriented, preferring to control their own learning path and resources. They may feel constrained or disengaged by rigid structure or excessive oversight.' }
+            'prefers-guidance': { name: 'Prefers Guidance', description: 'This learner thrives with clear instructions, defined tasks, and external motivation. They may feel anxious or overwhelmed with too much ambiguity or self-direction.', autonomyPreference: 20 }, // Low autonomy preference
+            'balanced': { name: 'Balanced', description: 'This learner is comfortable with some guidance and structure but also appreciates opportunities for independent exploration and choice.', autonomyPreference: 50 }, // Medium autonomy preference
+            'self-directed': { name: 'Self-Directed', description: 'This learner is highly motivated and goal-oriented, preferring to control their own learning path and resources. They may feel constrained or disengaged by rigid structure or excessive oversight.', autonomyPreference: 80 } // High autonomy preference
         });
         // Flexibility property removed from scenarios
         Object.assign(scenarios, {
