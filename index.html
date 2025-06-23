@@ -390,23 +390,36 @@
             try {
                 // Set up firebase
                 setLogLevel('debug');
+                let firebaseConfig = {};
                 const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-                if (firebaseConfigString.trim().startsWith('{')) {
-                    const firebaseConfig = JSON.parse(firebaseConfigString);
-                    const app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
                 
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                    console.log("Firebase initialized and user signed in.");
-                    listenForConfigurations();
+                if (firebaseConfigString.trim().startsWith('{')) {
+                    // Use Canvas-provided config
+                    firebaseConfig = JSON.parse(firebaseConfigString);
                 } else {
-                     console.log("Firebase config not available. Running in local-only mode.");
+                    // Fallback for running outside Canvas (e.g., GitHub Pages)
+                    console.warn("Firebase config not available from Canvas environment. Using placeholder config. Data persistence will be limited without a proper Firebase project setup.");
+                    const firebaseConfig = {
+  apiKey: "AIzaSyBLj8Ql3rEOLmIiVW6IDa8uJNGFLNbhA6U",
+  authDomain: "tdt-sandbox.firebaseapp.com",
+  projectId: "tdt-sandbox",
+  storageBucket: "tdt-sandbox.firebasestorage.app",
+  messagingSenderId: "924451875699",
+  appId: "1:924451875699:web:46464d31b27c4c62b3f306"
+};
                 }
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+            
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                console.log("Firebase initialized and user signed in.");
+                listenForConfigurations();
 
                 setupPersonas();
                 setupSliders();
