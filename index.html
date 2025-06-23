@@ -252,7 +252,7 @@
                          <button data-id="${config.id}" class="delete-btn ml-2 p-2 text-gray-400 hover:text-red-500 transition-colors">
                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0: 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
                              </svg>
                          </button>
                     </div>`;
@@ -460,13 +460,13 @@
 
             // Base explanation for Structure and Dialogue
             if (structure > 70 && dialogue < 30) {
-                explanationText += 'The course\'s **high structure** (e.g., rigid lesson plans, fixed content) combined with **low dialogue** (minimal interaction, one-way communication) creates a naturally large psychological gap for the learner. This often characterizes highly standardized or automated courses.';
+                explanationText += '<p>The course\'s **high structure** (e.g., rigid lesson plans, fixed content) combined with **low dialogue** (minimal interaction, one-way communication) creates a naturally large psychological gap for the learner. This often characterizes highly standardized or automated courses.</p>';
             } else if (structure < 30 && dialogue > 70) {
-                explanationText += 'The course\'s **high level of dialogue** (e.g., active discussions, frequent instructor feedback) fosters a strong sense of connection, significantly reducing the base distance. The **low structure** allows for more learner-driven interaction.';
+                explanationText += '<p>The course\'s **high level of dialogue** (e.g., active discussions, frequent instructor feedback) fosters a strong sense of connection, significantly reducing the base distance. The **low structure** allows for more learner-driven interaction.</p>';
             } else if (structure >= dialogue) {
-                explanationText += 'The course has a **higher emphasis on structure** than on dialogue, which generally contributes to increased transactional distance. Learners may feel a greater psychological space between themselves and the instructor or content.';
+                explanationText += '<p>The course has a **higher emphasis on structure** than on dialogue, which generally contributes to increased transactional distance. Learners may feel a greater psychological space between themselves and the instructor or content.</p>';
             } else { // dialogue > structure
-                explanationText += 'The course offers a **higher degree of dialogue** compared to its structure, which helps to bridge the psychological gap and reduce transactional distance. Learners are likely to feel more connected.';
+                explanationText += '<p>The course offers a **higher degree of dialogue** compared to its structure, which helps to bridge the psychological gap and reduce transactional distance. Learners are likely to feel more connected.</p>';
             }
 
             // Autonomy note (as per screenshot), now in a distinct box
@@ -483,7 +483,7 @@
                                 </div>`;
 
 
-            return `<p>${explanationText}</p>`;
+            return explanationText; // Return raw HTML, let the outer div handle p tags
         }
         
         function createBarHTML(s,d) {
